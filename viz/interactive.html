@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>US Earthquakes by Region</title>
+        <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+        <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
+    </head>
+    <style type="text/css">
+/* 13. Basic Styling with CSS */
+
+/* Style the lines by removing the fill and applying a stroke */
+.West {
+    fill: none;
+    stroke: #a6cee3;
+    stroke-width: 1;
+}
+
+.South {
+    fill: none;
+    stroke: #1f78b4;
+    stroke-width: 1;
+}
+
+.Northeast {
+    fill: none;
+    stroke: #b2df8a;
+    stroke-width: 1;
+}
+
+.Midwest {
+    fill: none;
+    stroke: #33a02c;
+    stroke-width: 1;
+}
+  
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+/* Style the dots by assigning a fill and stroke */
+.dotW {
+    fill: #a6cee3;
+    stroke: #a6cee3;
+}
+
+.dotS {
+    fill: #1f78b4;
+    stroke: #1f78b4;
+}
+
+.dotNE {
+    fill: #b2df8a;
+    stroke: #b2df8a;
+}
+
+.dotMW {
+    fill: #33a02c;
+    stroke: #33a02c;
+}
+  
+  .focus circle {
+  fill: none;
+  stroke: steelblue;
+}
+
+</style>
+    <body>
+        <script type="text/javascript">
+            // Your beautiful D3 code will go here
+           
+var dataset = {};
+dataset['West'] = []
+dataset['South'] = []
+dataset['Northeast'] = []
+dataset['Midwest'] = []
+
+            d3.dsv(',',"state-year-earthquakes.csv").then(function(data) {
+
+//copy data to dataset
+var parseYear = d3.timeParse("%Y")
+var countByRegionYear = d3.nest()
+    .key(function(d) {return [d.region, d.year]})
+    .entries(data)
+for (var RY of countByRegionYear){
+    var count = 0
+    for (var S of RY.values){
+        count = count + parseInt(S.count)
+        region = S.region
+        year = parseYear(S.year)
+    }
+    dataset[region].push({'year' : year, 'count' : count, 'region' : region})
+}
+
+
+
+
+
+ var margin = {top: 50, right: 100, bottom: 50, left: 50}
+   , width = 900 //- margin.left - margin.right//window.innerWidth - margin.left - margin.right // Use the window's width 
+   , height = 500
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+var parseYear = d3.timeParse("%Y")
+
+var xScale = d3.scaleTime()
+    .domain([d3.min(dataset['Northeast'], function(d) { return d.year; }), d3.max(dataset['Northeast'], function(d) { return d.year; })])
+    .range([margin.left,width]); //multiply padding in second half of tuple by some factor if necessary
+
+// //Use Linear scale for Y axis
+
+var yScale = d3.scaleLinear()
+    .domain([d3.min(dataset['Northeast'], function(d) { return d.count; }), d3.max(dataset['West'], function(d) { return d.count;})])
+    .range([height,margin.top]);
+
+var mouseover = function(g) {
+selectedRegion = g.region
+selectedYear = g.year.getFullYear().toString()
+
+
+
+var RYdata = data.filter(d => d.year == selectedYear && d.region == selectedRegion).sort(function(a, b) {return parseInt(a.count) - parseInt(b.count)})
+var AppStates = RYdata.map (d => d.state)
+
+
+    d3.select("body").selectAll('#svg2').remove()
+    d3.select(this)
+      .attr("r", "5")
+    
+var svg2 = d3.select("body").append("svg")
+    .attr('id', 'svg2')
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var yScale2 = d3.scaleBand()
+    .domain(AppStates)
+    .range([height,margin.top]);
+
+
+var xScale2 = d3.scaleLinear()
+    .domain([d3.min(RYdata, function(d) { return parseInt(d.count); }), d3.max(RYdata, function(d) { return parseInt(d.count); })])
+    .range([margin.left,width]); //multiply padding in second half of tuple by some factor if necessary
+var xAxis2 = d3.axisBottom(xScale2)
+                //.ticks(d3.timeYear.every(2));
+                //.text("Year")
+
+var yAxis2 = d3.axisLeft(yScale2)
+
+svg2.append("g")
+    .attr("class", "axis")
+    .attr("transform", "translate(0," + (height + ")"))
+    .call(xAxis2);
+
+svg2.append("g")
+   .attr("class", "axis")
+  .attr("transform", "translate(" + margin.left + ")")
+   .call(yAxis2);
+
+var mousetext = svg2.append("text")
+        .attr('id', 'mousetext')
+        .attr("x", (width / 2))             
+        .attr("y", 0)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        //.style("text-decoration", "underline")  
+        .text(selectedRegion + " Region Earthquakes " + selectedYear);
+
+svg2.selectAll("rect")
+   .data(RYdata)
+   .enter()
+   .append("rect")
+   //x value is now tied directly to the width of the SVG (w) and the number of values in the dataset (dataset.length).
+   .attr("x", 50) //Potentially return xScale(d.Date) here instead??
+   .attr("y", function(d) {
+    return yScale2(d.state)}) //Height minus data value
+   //set the width as fraction of SVG width and number of data points, minue a padding value
+   .attr("width", function(d){
+    return xScale2(parseInt(d.count))
+
+   })
+
+   .attr("height", yScale2.bandwidth()-1) //scales data by four- remove if not necessary
+   //.attr("transform", "translate(0," + (2*10) + ")")
+   .attr("fill", "#33a02c"); //adds color
+
+   svg2
+    .style("opacity", 1)
+  }
+
+  var mouseleave = function(d) {
+    var mousetext = d3.select('#mousetext')
+      mousetext.style("opacity", 0)
+    d3.select(this)
+      .attr("r", "2")
+    var svg2 = d3.select('#svg2')
+        svg2.style("opacity", 0)
+  }
+
+var West = d3.line()
+    .x(function(d) { return xScale(d.year); }) // set the x values for the line generator
+    .y(function(d) { return yScale(d.count); }) // set the y values for the line generator 
+    .curve(d3.curveMonotoneX) // apply smoothing to the line
+
+var South = d3.line()
+    .x(function(d) { return xScale(d.year); }) // set the x values for the line generator
+    .y(function(d) { return yScale(d.count); }) // set the y values for the line generator 
+    .curve(d3.curveMonotoneX) 
+
+var Northeast = d3.line()
+    .x(function(d) { return xScale(d.year); }) // set the x values for the line generator
+    .y(function(d) { return yScale(d.count); }) // set the y values for the line generator 
+    .curve(d3.curveMonotoneX) 
+
+var Midwest = d3.line()
+    .x(function(d) { return xScale(d.year); }) // set the x values for the line generator
+    .y(function(d) { return yScale(d.count); }) // set the y values for the line generator 
+    .curve(d3.curveMonotoneX) 
+
+///Create generic axis function and pass in scale operator
+var xAxis = d3.axisBottom(xScale)
+                //.ticks(d3.timeYear.every(2));
+                //.text("Year")
+
+var yAxis = d3.axisLeft(yScale)
+             .ticks(14);
+
+svg.append("path")
+    .datum(dataset['West']) // 10. Binds data to the line 
+    .attr("class", "West") // Assign a class for styling 
+    .attr("d", West); // 11. Calls the line generator 
+
+svg.append("path")
+    .datum(dataset['South']) // 10. Binds data to the line 
+    .attr("class", "South") // Assign a class for styling 
+    .attr("d", South); // 11. Calls the line generator
+
+svg.append("path")
+    .datum(dataset ['Northeast']) // 10. Binds data to the line 
+    .attr("class", "Northeast") // Assign a class for styling 
+    .attr("d", Northeast); // 11. Calls the line generator
+
+svg.append("path")
+    .datum(dataset ['Midwest']) // 10. Binds data to the line 
+    .attr("class", "Midwest") // Assign a class for styling 
+    .attr("d", Midwest); // 11. Calls the line generator
+
+
+svg.selectAll(".dotW")
+    .data(dataset['West'])
+  .enter().append("circle") // Uses the enter().append() method
+    .attr("class", "dotW") // Assign a class for styling
+    .attr("cx", function(d) { return xScale(d.year) })
+    .attr("cy", function(d) { return yScale(d.count) })
+    .attr("r", 2)
+    .on("mouseover", mouseover)
+    .on("mouseleave", mouseleave);
+
+svg.selectAll(".dotS")
+    .data(dataset['South'])
+  .enter().append("circle") // Uses the enter().append() method
+    .attr("class", "dotS") // Assign a class for styling
+    .attr("cx", function(d) { return xScale(d.year) })
+    .attr("cy", function(d) { return yScale(d.count) })
+    .attr("r", 2)
+    .on("mouseover", mouseover)
+    .on("mouseleave", mouseleave);
+
+svg.selectAll(".dotNE")
+    .data(dataset['Northeast'])
+  .enter().append("circle") // Uses the enter().append() method
+    .attr("class", "dotNE") // Assign a class for styling
+    .attr("cx", function(d) { return xScale(d.year) })
+    .attr("cy", function(d) { return yScale(d.count) })
+    .attr("r", 2)
+    .on("mouseover", mouseover)
+    .on("mouseleave", mouseleave);
+
+svg.selectAll(".dotMW")
+    .data(dataset['Midwest'])
+  .enter().append("circle") // Uses the enter().append() method
+    .attr("class", "dotMW") // Assign a class for styling
+    .attr("cx", function(d) { return xScale(d.year) })
+    .attr("cy", function(d) { return yScale(d.count) })
+    .attr("r", 2)
+    .on("mouseover", mouseover)
+    .on("mouseleave", mouseleave);
+
+// ///generate axis and append to SVG - this should be done at end
+svg.append("g")
+    .attr("class", "axis")
+    .attr("transform", "translate(0," + (height + ")"))
+    .call(xAxis);
+
+svg.append("g")
+   .attr("class", "axis")
+  .attr("transform", "translate(" + margin.left + ")")
+   .call(yAxis);
+
+   svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        //.style("text-decoration", "underline")  
+        .text("US Earthquakes by Region 2010-2015");
+
+// Handmade legend
+svg.append("circle").attr("cx", 890)
+    .attr("cy", 59) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("r", 5).style("fill", "#33a02c")
+svg.append("text").attr("x", 910).attr("y", 63).text("Midwest").style("font-size", "15px").attr("alignment-baseline","middle")
+
+svg.append("circle").attr("cx", 890)
+    .attr("cy", 79) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("r", 5).style("fill", "#b2df8a")
+svg.append("text").attr("x", 910).attr("y", 83).text("Northeast").style("font-size", "15px").attr("alignment-baseline","middle")
+
+svg.append("circle").attr("cx", 890)
+    .attr("cy", 99) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("r", 5).style("fill", "#1f78b4")
+svg.append("text").attr("x", 910).attr("y", 103).text("South").style("font-size", "15px").attr("alignment-baseline","middle")
+
+svg.append("circle").attr("cx", 890)
+    .attr("cy", 119) // 100 is where the first dot appears. 25 is the distance between dots
+    .attr("r", 5).style("fill", "#a6cee3")
+svg.append("text").attr("x", 910).attr("y", 123).text("West").style("font-size", "15px").attr("alignment-baseline","middle")
+
+//svg2
+
+
+
+});
+
+
+        </script>
+    </body>
+</html>

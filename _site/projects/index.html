@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="chrome=1">
+      <title>talmullenbach.github.io by talmullenbach</title>
+
+      <link rel="stylesheet" href="/assets/css/style.css?v=d6541516bcad9d77926e5332bb185c88428bc86f">
+      <meta name="viewport" content="width=device-width">
+      <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <![endif]-->
+    </head>
+    <body>
+      <div class="wrapper">
+        <header>
+            <div>
+                <!-- <img src="/portrait.jpg" id="profpic" width=70% />
+-->
+          <h2> Tal Mullenbach </h2>
+          <p></p>
+          <table>
+              <tr><td><a href="/">Home</a></td></tr>
+	      <tr><td><a href="/projects">Projects</a></td></tr>
+              <tr><td></td></tr>
+              <!--<tr><td><a href="https://github.com/talmullenbach">GitHub</a></td></tr>-->
+              <tr><td><a href="/assets/TalMullenbachResume.pdf">Resume</a></td></tr>
+              <tr><td><a href="https://linkedin.com/in/talmullenbach">LinkedIn</a></td></tr>
+          </table>
+          </div>
+
+          
+        </header>
+        <section>
+
+        <h1>Projects</h1>
+
+<h2>National Park Text Mining & Visualization</h2>
+
+<p>As part of my class project for my data visualization and analysis course I created a dashboard designed for the National Park Service (NPS) that displayed the top descriptive words used on TripAdvisor reviews to describe each of the 61 National Parks. This was designed to provide insight into what park features/amenities were most important to the visitors of each park, and thus most lucrative for the NPS to invest, maintain, and advertise. </p>
+
+<img src="/assets/NPS Dash.png"/>
+
+<p></p>
+<p>My team and I scraped over 150,000 TripAdvisor reviews for each of the 60 parks, performed some cleanup to remove the names of the parks, articles of speech, and prepositions. We then classified the words through the spaCy Python package based on part of speech, as nouns or verbs may be more useful than adjectives, as common words such as "beautiful" may not be of use for our purposes. From there we used the text mining TF-IDF package in Python to identify which words were unique to a given park. Our findings were displayed in a Tableau dashboard with an interactive map of the U.S. that would display the top words for a selected park. Often, specific trail names, visitor centers, and shuttle services were most often used by visitors. 
+</p>
+
+<img src="/assets/Word Clouds.png"/>
+
+<p></p>
+
+<h2>D3 Samples</h2>
+
+<p>As part of the Data and Visual Analytics class, I learned how to use D3.</p>
+
+<p>Click <a href="/viz/interactive.html">here</a> to see an interactive visualization of U.S. earthquakes by region - hover over the points!</p> 
+<p>Click <a href="/viz/choropleth.html">here</a> to see a choropleth of similar data- hover over the states!
+
+<h2>Atlanta Larceny Tableau Dashboard</h2>
+
+<p>The objective of this project was to create a storyboard dashboard. I used an Atlanta 2017 larceny dataset from Kaggle to visualize car thefts in the various Atlanta neighborhoods using Tableau. The dashboard becomes more granular from top to bottom.</p>
+
+<img src="/assets/ATL Larceny Dash - 2017.png"/>
+
+
+        </section>
+        <footer>
+          <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+        </footer>
+      </div>
+      <script src="/assets/js/scale.fix.js"></script>
+
+
+    
+  </body>
+</html>

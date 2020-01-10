@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>US Earthquakes by Region</title>
+        <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+        <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
+        <script type="text/javascript" src="../lib/topojson.v2.min.js"></script>
+    </head>
+    <style type="text/css">
+.nation {
+  fill: none;
+}
+
+div.tooltip {
+     position: absolute;
+     text-align: center;
+     padding: .5rem;
+     background: #FFFFFF;
+     color: #313639;
+     border: 1px solid #313639;
+     border-radius: 8px;
+     pointer-events: none;
+     /*font-size: 1.3rem;*/
+}
+
+.states {
+  fill: #888;
+  stroke: #000;
+  stroke-linejoin: round;
+}
+
+    </style>
+    <svg width="960" height="600"></svg>
+    <body>
+        <script type="text/javascript">
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+var earthquakes = {};
+
+
+var projection = d3.geoAlbersUsa()
+	.translate([ width / 2, height / 2])
+	.scale(850)
+
+var div = d3.select("body").append("div")
+     .attr("class", "tooltip")
+     .style("opacity", 0);
+
+var path = d3.geoPath()
+	.projection(projection)
+
+console.log(path)
+console.log(typeof path)
+
+
+
+
+// var mouseover = function(d) {
+// 	console.log('mouseover fired')
+//     tooltip
+//       .style("opacity", 1)
+//     d3.select(this)
+//       .style("stroke", "black")
+//       .style("opacity", 1)
+//     console.log("this", this)
+//   }
+//   var mousemove = function(d) {
+//   	console.log('mousemove fired')
+//     tooltip
+//       .html("The exact value of<br>this cell is: " + d.value)
+//       .style("left", (d3.mouse(this)[0]+70) + "px")
+//       .style("top", (d3.mouse(this)[1]) + "px")
+//      console.log("this", this)
+//   }
+//   var mouseleave = function(d) {
+//   	console.log('mousemove fired')
+//     tooltip
+//       .style("opacity", 0)
+//     d3.select(this)
+//       .style("stroke", "none")
+//       .style("opacity", 0.8)
+//     console.log("this", this)
+//   }
+
+	
+
+
+
+//Legend
+
+
+
+dataset = []
+var promises = [
+  d3.json("states-10m.json"),
+  d3.csv("state-earthquakes.csv", function(d) { 
+  	earthquakes[d.States] = {'region': d.Region, 'total_earthquakes' : parseInt(d['Total Earthquakes'])}; 
+
+  	dataset.push(d);
+
+  })
+]
+           //could be d3.dsv, but online insists on d3.csv
+         //    d3.dsv(',',"state-earthquakes.csv").then(function(data) {
+        	// });
+
+
+Promise.all(promises).then(ready)
+
+function ready([us]) {
+
+	
+
+var x = d3.scaleLinear()
+    .domain(d3.extent(dataset, function(d) { return parseInt(d["Total Earthquakes"]); }))
+    .rangeRound([600, 860]);
+
+ var color = d3.scaleLog()
+    .domain(d3.extent(dataset, function(d) { return parseInt(d["Total Earthquakes"])+1}))
+    // .range(d3.schemeBlues[9])
+    .range(['#f7fbff', '#08306b']);
+
+
+var legend = svg.selectAll(".legend")
+	.data([1, 5, 10, 50, 100, 500, 1000, 5000, 10000])
+	.enter().append('g')
+	.attr("class","legend")
+	.attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"})
+
+	legend.append("rect")
+		.attr("x", 885)
+		.attr("y", function(d, i){return 289 + i*.1})
+		.attr("width", 10)
+		.attr("height", 10)
+		.style("fill", color)
+
+	legend.append('text')
+		.attr("x", 900)
+		.attr("y", height/2)
+		.text(function(d){return d})
+
+svg.append("text")
+              .attr("class", "label")
+              .attr("x", 875)
+              .attr("y", height/2-40)
+              .attr("dy", ".35em")
+              .text("Earthquake");
+	svg.append("text")
+              .attr("class", "label")
+              .attr("x", 875)
+              .attr("y", height/2-23)
+              .attr("dy", ".35em")
+              .text("Frequency");
+	
+	
+  svg.append("g")
+      .attr("class", "states")
+    .selectAll("path")
+    .data(topojson.feature(us, us.objects.states).features)
+    .enter().append("path")
+    .attr("d", path)
+    .attr("fill", function(d) {
+    		if (!(d.properties.name in earthquakes)){
+    			return '#fff'
+    		}
+     		return color(earthquakes[d.properties.name]['total_earthquakes'])
+     	})
+    .append("title")
+    .text(function(d) { return d['Total Earthquakes'] + "%"; })
+ 
+svg.selectAll("path")
+.on('mouseover', function (d, i) {
+ 
+          d3.select(this).transition()
+               .duration('50')
+               .attr("fill", "red")
+               .attr('opacity', '.85')
+		div.transition()
+               .duration(50)
+               .style("opacity", 1);
+		div.html("State: " + d.properties.name + "<br>Region: " + earthquakes[d.properties.name]['region']+ "<br>Earthquakes: " + earthquakes[d.properties.name]['total_earthquakes'])
+               .style("left", (d3.event.pageX + 10) + "px")
+               .style("top", (d3.event.pageY - 15) + "px");
+           })
+	
+     .on('mouseout', function (d, i) {
+     	// tooltip
+     	//  .style("opacity", 0)
+          d3.select(this).transition()
+               .duration('50')
+               .attr("fill", function(d) {
+    		if (!(d.properties.name in earthquakes)){
+    			return '#fff'
+    		}
+     		return color(earthquakes[d.properties.name]['total_earthquakes'])
+     	})
+               .attr('opacity', '1');
+		div.transition()
+               .duration('50')
+               .style("opacity", 0);
+
+           })  
+
+
+
+var states = topojson.feature(us, us.objects.states).features
+
+  }
+
+
+        </script>
+    </body>
+</html>
